@@ -1,0 +1,21 @@
+{
+    "name": "Laravel DevContainer",
+    "dockerComposeFile": "../compose.yml",
+    "service": "workspace",
+    "workspaceFolder": "/var/www",
+    "shutdownAction": "stopCompose",
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "terminal.integrated.defaultProfile.linux": "bash"
+        },
+        "extensions": [
+          "felixfbecker.php-intellisense",
+          "xdebug.php-debug",
+          "esbenp.prettier-vscode"
+        ]
+      }
+    },
+    "postCreateCommand": "composer install",
+    "remoteUser": "root"
+}
