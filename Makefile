@@ -2,7 +2,7 @@
 include .env
 export
 
-PROJECT ?= pj_a
+PROJECT ?= ${PROJECT_NAME}
 
 # 現在のプロジェクト名を取得（.env に書かれている PROJECT_NAME）
 CURRENT_PROJECT := $(shell grep "^PROJECT_NAME=" .env 2>/dev/null | cut -d '=' -f2)
@@ -10,7 +10,45 @@ CURRENT_PROJECT := $(shell grep "^PROJECT_NAME=" .env 2>/dev/null | cut -d '=' -
 # 切り替え対象の .env ファイル
 ENV_FILE := env/$(PROJECT).env
 
-switch: ## 別プロジェクトに切り替える（PROJECT=pj_x）
+create-project: ## Laravel新規プロジェクトを作成して初期化（PROJECT=pj_x）
+	@if [ -z "$(NEWPROJECT)" ]; then \
+		echo "❌ NEWPROJECT変数が指定されていません。make create-project NEWPROJECT=pj_x のように使ってください。"; \
+		exit 1; \
+	fi
+	@echo "🛑 Stopping running containers..."
+	docker-compose down
+
+	@echo "🔄 Switching current project to $(NEWPROJECT)..."
+	@if [ -f env/$(NEWPROJECT).env ]; then \
+		cp env/$(NEWPROJECT).env .env; \
+		echo "✅ Switched to env/$(NEWPROJECT).env"; \
+	else \
+		echo "⚠ env/$(NEWPROJECT).env が見つかりません。テンプレートから作成します。"; \
+		mkdir -p projects/$(NEWPROJECT) ; \
+		sed "s/{project}/$(NEWPROJECT)/g" env/env-template > env/$(NEWPROJECT).env; \
+		cp env/$(NEWPROJECT).env .env; \
+	fi
+
+	@echo "🚀 Creating Laravel project at projects/$(NEWPROJECT)"
+	docker-compose up -d --build
+	docker compose exec workspace bash -c "\
+		composer create-project laravel/laravel . "
+
+	@echo "🔧 Copying .env and generating APP_KEY..."
+	docker compose exec workspace bash -c "\
+		cp -n .env.example .env && php artisan key:generate"
+
+	@echo "📦 Running migration..."
+	docker compose exec workspace bash -c "php artisan migrate"
+
+	@echo "🔐 Fixing permissions..."
+	docker exec laravel_app bash -c "\
+		chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+		chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
+
+	@echo "✅ Laravel project '$(NEWPROJECT)' setup complete and now active."
+
+switch: ## 別プロジェクトに切り替える（PROJECT=[project名]）
 	@echo "Switching project to: $(PROJECT)"
 	@if [ -f $(ENV_FILE) ]; then \
 		cp $(ENV_FILE) .env; \
@@ -39,12 +77,16 @@ list: ## 切り替え可能なプロジェクト一覧を表示
 	done
 
 up: ## docker-compose で起動
-	docker-compose up -d --build
+	docker-compose up -d
 
 down: ## docker-compose を停止
 	docker-compose down
 
-restart: ## プロジェクト切り替え＋再起動（PROJECT=pj_x）
+down-all: ## すべてのコンテナ・ボリューム・ネットワークを削除（破壊的）
+	@echo "🔥 WARNING: Removing all containers, volumes, and networks defined in docker-compose..."
+	docker-compose down -v --remove-orphans
+
+restart: ## プロジェクト切り替え＋再起動（PROJECT=[project名]）
 	make down
 	make switch PROJECT=$(PROJECT)
 	make up
@@ -64,10 +106,10 @@ dbinfo: ## 現在設定されているDB情報を表示
 # Make targets with description for help
 .PHONY: help
 
-help:
+help: ## このヘルプを表示
 	@echo ""
 	@echo "Usage:"
-	@echo "  make <target>"
+	@echo "  make <target> [PROJECT=pj_x]"
 	@echo ""
 	@echo "Targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

@@ -2,7 +2,7 @@
     "name": "Laravel DevContainer",
     "dockerComposeFile": "../compose.yml",
     "service": "workspace",
-    "workspaceFolder": "/var/www",
+    "workspaceFolder": "/var/www/html",
     "shutdownAction": "stopCompose",
     "customizations": {
       "vscode": {

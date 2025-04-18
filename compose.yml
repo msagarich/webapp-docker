@@ -3,9 +3,9 @@ services:
     build:
       context: ./docker/workspace
     container_name: laravel_workspace
-    working_dir: /var/www
+    working_dir: /var/www/html
     volumes:
-      - ./projects/${PROJECT_NAME}:/var/www
+      - ./projects/${PROJECT_NAME}:/var/www/html
     tty: true
     depends_on:
       - app
@@ -19,7 +19,7 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ./:/var/www/html
+      - ./projects/${PROJECT_NAME}:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - db
@@ -27,19 +27,19 @@ services:
       - APACHE_DOCUMENT_ROOT=/var/www/html/public
 
   db:
-    image: mariadb:10.6
-    container_name: laravel_db
+    image: ${DB_IMAGE}
+    container_name: ${DB_CONTAINER_NAME}
     restart: always
     ports:
       - "${DB_PORT}:${DB_PORT}"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
       - db_data:${DB_VOLUME_PATH}
 

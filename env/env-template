@@ -1,19 +1,13 @@
-APP_ENV=local
-PROJECT_NAME=myapp
-
+# プロジェクトごとの環境変数
+PROJECT_NAME={project}
 DB_ENGINE=mariadb
 DB_IMAGE=mariadb:10.6
 DB_CONTAINER_NAME=laravel_db
-
-DB_PORT=5432
+DB_PORT=3306
+DB_VOLUME_NAME=laravel_db_data_{project}
 DB_VOLUME_PATH=/var/lib/mysql
-DB_VOLUME_NAME=laravel_db_data
 
 MYSQL_ROOT_PASSWORD=root
 MYSQL_DATABASE=laravel
 MYSQL_USER=laravel
 MYSQL_PASSWORD=secret
-
-POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
