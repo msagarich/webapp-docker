@@ -6,6 +6,8 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./projects/${PROJECT_NAME}:/var/www/html
+      - ./container/${PROJECT_NAME}/app/storage:/var/www/html/storage
+      - ./container/${PROJECT_NAME}/app/bootstrap/cache:/var/www/html/bootstrap/cache
     tty: true
     depends_on:
       - app
@@ -20,6 +22,8 @@ services:
       - "8000:80"
     volumes:
       - ./projects/${PROJECT_NAME}:/var/www/html
+      - ./container/${PROJECT_NAME}/app/storage:/var/www/html/storage
+      - ./container/${PROJECT_NAME}/app/bootstrap/cache:/var/www/html/bootstrap/cache
     working_dir: /var/www/html
     depends_on:
       - db

@@ -38,8 +38,7 @@ create-project: ## Laravel新規プロジェクトを作成して初期化（PRO
 	docker compose exec workspace bash -c "\
 		cp -n .env.example .env && php artisan key:generate"
 
-	@echo "📦 Running migration..."
-	docker compose exec workspace bash -c "php artisan migrate"
+	make refresh
 
 	@echo "🔐 Fixing permissions..."
 	docker exec laravel_app bash -c "\
@@ -47,6 +46,20 @@ create-project: ## Laravel新規プロジェクトを作成して初期化（PRO
 		chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
 
 	@echo "✅ Laravel project '$(NEWPROJECT)' setup complete and now active."
+
+refresh: ## DBデータを再作成する
+	make down-all
+
+	@echo "Recreate Container"
+	docker-compose up -d --build
+
+	@echo "Running migration..."
+	docker compose exec workspace bash -c "php artisan migrate"
+
+	@echo "Fixing permissions..."
+	docker exec laravel_app bash -c "\
+		chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+		chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache"
 
 switch: ## 別プロジェクトに切り替える（PROJECT=[project名]）
 	@echo "Switching project to: $(PROJECT)"
